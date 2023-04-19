@@ -9,19 +9,32 @@ function giveMessage(message, task = null) {
   //&times used to create the x btn
   if (task !== null)
     ele.innerHTML += `<div> <span class="closebtn" onclick="this.parentElement.style.display='none';">&times;</span>
-    ${task.text} ${message} </div>`;
+    ${task.title} ${message} </div>`;
   else
     ele.innerHTML += `<div> <span class="closebtn" onclick="this.parentElement.style.display='none';">&times;</span>
     ${message} </div>`;
+}
+
+//Fetching the dummy list - Promise using Aysnc Await Syntax
+async function fetchToDos() {
+  try {
+    const response = await fetch("https://jsonplaceholder.typicode.com/todos");
+    const data = await response.json();
+    taskListArr = data.slice(5, 10);
+    renderList();
+    giveMessage("5 dummy ToDos added");
+  } catch (error) {
+    console.log(error);
+  }
 }
 //Pushing Task in the List inside DOM
 function addTaskToDOM(task) {
   const li = document.createElement("li");
   li.innerHTML = `
     <input type="checkbox" id="${task.id}" ${
-    task.done ? "checked" : ""
+    task.completed ? "checked" : ""
   } class="custom-checkbox">
-    <label for="${task.id}" id = "task-name">${task.text}</label>
+    <label for="${task.id}" id = "task-name">${task.title}</label>
     <img src="bin.svg" class = "delete" data-id = "${task.id}">    
     `;
   taskList.append(li);
@@ -36,11 +49,13 @@ function renderList() {
 }
 // DELETE BUTTON
 function deleteTask(taskId) {
+  //here taskId will contain a string as it is being fetched from
+  //html element, where as task.id will be a number
   const newTasks = taskListArr.filter(function (task) {
-    return task.id !== taskId;
+    return task.id !== Number(taskId);
   });
   const deletedTask = taskListArr.filter(function (task) {
-    return task.id === taskId;
+    return task.id === Number(taskId);
   });
   taskListArr = [...newTasks];
   renderList();
@@ -50,16 +65,18 @@ function deleteTask(taskId) {
 //CHECK BOX
 function markTaskAsComplete(taskId) {
   const currtask = taskListArr.filter(function (task) {
-    return task.id === taskId;
+    //here taskId will contain a string as it is being fetched from
+    //html element, where as task.id will be a number
+    return task.id === Number(taskId);
   });
 
   if (currtask.length > 0) {
     const currentTask = currtask[0];
 
-    currentTask.done = !currentTask.done;
-    if (currentTask.done === true)
-      giveMessage("You Completed Task " + currentTask.text);
-    else giveMessage("Your Task " + currentTask.text + " is still incomplete");
+    currentTask.completed = !currentTask.completed;
+    if (currentTask.completed === true)
+      giveMessage("You Completed Task " + currentTask.title);
+    else giveMessage("Your Task " + currentTask.title + " is still incomplete");
     renderList();
     return;
   } else {
@@ -68,7 +85,7 @@ function markTaskAsComplete(taskId) {
 }
 //Comparator Functions for sort()
 function sortAccToName(a, b) {
-  return a.text.localeCompare(b.text);
+  return a.title.localeCompare(b.title);
 }
 function sortAccToTime(a, b) {
   return a.id - b.id;
@@ -100,9 +117,9 @@ function addTask() {
   const text = inputBar.value;
   if (text.length !== 0) {
     const task = {
-      text: text,
-      id: Date.now().toString(),
-      done: false,
+      title: text,
+      id: Date.now(),
+      completed: false,
     };
     taskListArr.push(task);
     renderList();
@@ -136,5 +153,9 @@ function handleKey(e) {
     addTask();
   }
 }
-document.addEventListener("click", handleClick);
-document.addEventListener("keyup", handleKey);
+function appInitialize() {
+  document.addEventListener("click", handleClick);
+  document.addEventListener("keyup", handleKey);
+  fetchToDos();
+}
+appInitialize();
